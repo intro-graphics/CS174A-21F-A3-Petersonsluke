@@ -13,10 +13,19 @@ export class Assignment3 extends Scene {
         this.shapes = {
             torus: new defs.Torus(15, 15),
             torus2: new defs.Torus(3, 15),
-            sphere: new defs.Subdivision_Sphere(4),
+            sphere4: new defs.Subdivision_Sphere(4),
+            sphere3: new defs.Subdivision_Sphere(3),
+            sphere2: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
+            sphere1: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(1),
             circle: new defs.Regular_2D_Polygon(1, 15),
+            moon : new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(1),
+            planet_1 : new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
+            planet_2 : new defs.Subdivision_Sphere(3),
+            planet_3 : new defs.Subdivision_Sphere(4),
+            planet_4 : new defs.Subdivision_Sphere(4),
             // TODO:  Fill in as many additional shape instances as needed in this key/value table.
             //        (Requirement 1)
+
         };
 
         // *** Materials
@@ -25,9 +34,16 @@ export class Assignment3 extends Scene {
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             test2: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
-            ring: new Material(new Ring_Shader()),
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
+            sun : new Material(new defs.Phong_Shader(), {ambient: 1, color: color(1,0,0,1)}),
+            planet_1 : new Material(new defs.Phong_Shader(), {diffusivity: 1, color: hex_color("#808080")}),
+            planet_2 : new Material(new defs.Phong_Shader(), {specularity: 1, diffusivity: .2, color: hex_color("#80FFFF")}),
+            planet_3 : new Material(new defs.Phong_Shader(), {specularity: 1, diffusivity: 1, color: hex_color("#B08040")}),
+            planet_4 : new Material(new defs.Phong_Shader(), {specularity: 1, color: hex_color("#C7E4EE")}),
+            ring : new Material(new Ring_Shader(), {color: hex_color("#B08040")}),
+            moon : new Material(new defs.Phong_Shader(), {diffusivity: 1, color: hex_color("#FF69B4")}),
+            planet_g : new Material(new Gouraud_Shader(), {specularity: 1, diffusivity: .2, color: hex_color("#80FFFF")}),
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -35,7 +51,7 @@ export class Assignment3 extends Scene {
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
+        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => this.initial_camera_location);
         this.new_line();
         this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
         this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
@@ -48,6 +64,8 @@ export class Assignment3 extends Scene {
 
     display(context, program_state) {
         // display():  Called once per frame of animation.
+        
+
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
@@ -60,18 +78,107 @@ export class Assignment3 extends Scene {
 
         // TODO: Create Planets (Requirement 1)
         // this.shapes.[XXX].draw([XXX]) // <--example
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+
+        
 
         // TODO: Lighting (Requirement 2)
-        const light_position = vec4(0, 5, 5, 1);
-        // The parameters of the Light are: position, color, size
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
+        
 
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
-        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-        const yellow = hex_color("#fac91a");
-        let model_transform = Mat4.identity();
+        
+        //const yellow = hex_color("#fac91a");
+        //let model_transform = Mat4.identity();
 
-        this.shapes.torus.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
+        //this.shapes.torus.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
+
+        //sun
+        //osciallte sun from radius of 1 to 3 over 10 seconds
+        const sun_osc = Math.cos((1/5)* Math.PI * t) + 2;
+        let sun_transform = Mat4.identity();
+        let S = Mat4.scale(sun_osc, sun_osc, sun_osc);
+        sun_transform = sun_transform.times(S);
+
+        //fade from red when smallest to white when largest radius
+        const fade = Math.cos((1/5)* Math.PI * t);
+        let sun_material = this.materials.sun;
+        sun_material.color = color(1, fade,  fade, 1);
+         
+        //Lighting,in the sun, same color and size parameters
+        const light_position = vec4(0, 0, 0, 1);
+        // The parameters of the Light are: position, color, size
+        program_state.lights = [new Light(light_position, color(1, fade, fade, 1), 10**sun_osc)];
+
+        //draw sun
+        this.shapes.sphere4.draw(context, program_state, sun_transform, sun_material);
+
+        //planet1
+        let one_transform = Mat4.identity();
+        let RS = Mat4.rotation(t, 0, 1, 0);
+        let T = Mat4.translation(5,0,0);
+        one_transform = one_transform.times(RS).times(T).times(RS);
+        this.shapes.planet_1.draw(context, program_state, one_transform, this.materials.planet_1);
+        this.planet_1 = Mat4.inverse(one_transform.times(Mat4.translation(0, 0, 5)));
+
+        //planet 2
+        let two_transform = Mat4.identity();
+        let RS_2 = Mat4.rotation(t*0.95, 0, 1, 0);
+        let T_2 = Mat4.translation(8,0,0);
+        two_transform = two_transform.times(RS_2).times(T_2).times(RS_2);
+
+        //every other second change to gourald
+        let material_2 = this.materials.planet_2;
+
+        if (Math.round(t) % 2 == 1) {
+           material_2 = this.materials.planet_g;
+        }
+        //material_2.Gouraud_Shader = (Math.floor(t) % 2 == 1);
+
+        this.shapes.planet_2.draw(context, program_state, two_transform, material_2);
+        this.planet_2 = Mat4.inverse(two_transform.times(Mat4.translation(0, 0, 5)));
+
+        //planet 3
+
+        let three_transform = Mat4.identity();
+        let RS_3 = Mat4.rotation(t*0.85, 0, 1, 0);
+        let T_3 = Mat4.translation(11,0,0);
+        three_transform = three_transform.times(RS_3).times(T_3).times(RS_3);
+
+        let ring_transform = (three_transform).times(Mat4.inverse(Mat4.rotation(t*0.85, 0, 1, 0)));
+        let tilt = Mat4.rotation(Math.PI/2, 0, 1, 0);
+        let tilt_rot = Mat4.rotation(Math.PI/2 + Math.PI/2 * Math.cos(t), 1, 0, 0);
+        //let Ring_S = Mat4.scale([1, 1, .01]);
+        ring_transform = ring_transform.times(tilt).times(tilt_rot).times(Mat4.scale(2,2,0.2));
+        //.times(Ring_S); times(tilt).times(tilt_rot)
+
+     
+        this.shapes.planet_3.draw(context, program_state, three_transform, this.materials.planet_3);
+        
+
+        this.shapes.torus2.draw(context, program_state, ring_transform, this.materials.ring);
+        this.planet_3 = Mat4.inverse(three_transform.times(Mat4.translation(0, 0, 5)));
+
+        //planet 4
+        let four_transform = Mat4.identity();
+        let RS_4 = Mat4.rotation(t*0.8, 0, 1, 0);
+        let T_4 = Mat4.translation(14,0,0);
+        four_transform = four_transform.times(RS_4).times(T_4).times(RS_4);
+
+        let moon_transform = Mat4.identity().times(four_transform).times(Mat4.rotation(t*0.8, 0, 1, 0)).times(Mat4.translation(2,0,0));
+
+        this.shapes.planet_4.draw(context, program_state, four_transform, this.materials.planet_4);
+        this.planet_4 = Mat4.inverse(four_transform.times(Mat4.translation(0, 0, 5)));
+
+        this.shapes.moon.draw(context, program_state, moon_transform, this.materials.moon);
+        this.moon = Mat4.inverse(moon_transform.times(Mat4.translation(0, 0, 5)));
+
+        if (this.attached != undefined) {
+            let desired = this.attached();
+            program_state.set_camera(desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1)));
+            //desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1));
+        }
+
+
     }
 }
 
@@ -124,7 +231,8 @@ class Gouraud_Shader extends Shader {
                 float attenuation = 1.0 / (1.0 + light_attenuation_factors[i] * distance_to_light * distance_to_light );
                 
                 vec3 light_contribution = shape_color.xyz * light_colors[i].xyz * diffusivity * diffuse
-                                                          + light_colors[i].xyz * specularity * specular;
+                                                          + light_colors[i].xyz * specularity * specular 
+                                                          + light_colors[i].xyz * ambient;
                 result += attenuation * light_contribution;
             }
             return result;
@@ -139,6 +247,7 @@ class Gouraud_Shader extends Shader {
             
             uniform mat4 model_transform;
             uniform mat4 projection_camera_model_transform;
+            varying vec4 vertex_color;
     
             void main(){                                                                   
                 // The vertex's final resting place (in NDCS):
@@ -146,6 +255,11 @@ class Gouraud_Shader extends Shader {
                 // The final normal vector in screen space.
                 N = normalize( mat3( model_transform ) * normal / squared_scale);
                 vertex_worldspace = ( model_transform * vec4( position, 1.0 ) ).xyz;
+
+                // Compute an initial (ambient) color:
+                vertex_color = vec4( shape_color.xyz * ambient, shape_color.w );
+                // Compute the final color with contributions from lights:
+                vertex_color.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
             } `;
     }
 
@@ -154,11 +268,9 @@ class Gouraud_Shader extends Shader {
         // A fragment is a pixel that's overlapped by the current triangle.
         // Fragments affect the final image or get discarded due to depth.
         return this.shared_glsl_code() + `
+         varying vec4 vertex_color;
             void main(){                                                           
-                // Compute an initial (ambient) color:
-                gl_FragColor = vec4( shape_color.xyz * ambient, shape_color.w );
-                // Compute the final color with contributions from lights:
-                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+                gl_FragColor = vertex_color;
             } `;
     }
 
@@ -249,7 +361,9 @@ class Ring_Shader extends Shader {
         uniform mat4 projection_camera_model_transform;
         
         void main(){
-          
+          center = vec4(0, 0, 0, 1);
+          point_position = vec4(position, 1.0);
+          gl_Position = projection_camera_model_transform * point_position;
         }`;
     }
 
@@ -258,7 +372,7 @@ class Ring_Shader extends Shader {
         // TODO:  Complete the main function of the fragment shader (Extra Credit Part II).
         return this.shared_glsl_code() + `
         void main(){
-          
+          gl_FragColor = sin(75.0 * distance(center, point_position)) * vec4(.69, .502, .0251, 1);
         }`;
     }
 }
