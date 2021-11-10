@@ -77,21 +77,12 @@ export class Assignment3 extends Scene {
             Math.PI / 4, context.width / context.height, .1, 1000);
 
         // TODO: Create Planets (Requirement 1)
-        // this.shapes.[XXX].draw([XXX]) // <--example
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
-        
-
         // TODO: Lighting (Requirement 2)
-        
-
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
         
-        //const yellow = hex_color("#fac91a");
-        //let model_transform = Mat4.identity();
-
-        //this.shapes.torus.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
-
+        
         //sun
         //osciallte sun from radius of 1 to 3 over 10 seconds
         const sun_osc = Math.cos((1/5)* Math.PI * t) + 2;
@@ -112,7 +103,7 @@ export class Assignment3 extends Scene {
         //draw sun
         this.shapes.sphere4.draw(context, program_state, sun_transform, sun_material);
 
-        //planet1
+        //planet1 transform and draw
         let one_transform = Mat4.identity();
         let RS = Mat4.rotation(t, 0, 1, 0);
         let T = Mat4.translation(5,0,0);
@@ -120,7 +111,7 @@ export class Assignment3 extends Scene {
         this.shapes.planet_1.draw(context, program_state, one_transform, this.materials.planet_1);
         this.planet_1 = Mat4.inverse(one_transform.times(Mat4.translation(0, 0, 5)));
 
-        //planet 2
+        //planet 2 transform and draw
         let two_transform = Mat4.identity();
         let RS_2 = Mat4.rotation(t*0.95, 0, 1, 0);
         let T_2 = Mat4.translation(8,0,0);
@@ -132,38 +123,37 @@ export class Assignment3 extends Scene {
         if (Math.round(t) % 2 == 1) {
            material_2 = this.materials.planet_g;
         }
-        //material_2.Gouraud_Shader = (Math.floor(t) % 2 == 1);
 
         this.shapes.planet_2.draw(context, program_state, two_transform, material_2);
         this.planet_2 = Mat4.inverse(two_transform.times(Mat4.translation(0, 0, 5)));
 
-        //planet 3
-
+        //planet 3 transform and draw
         let three_transform = Mat4.identity();
         let RS_3 = Mat4.rotation(t*0.85, 0, 1, 0);
         let T_3 = Mat4.translation(11,0,0);
         three_transform = three_transform.times(RS_3).times(T_3).times(RS_3);
 
+
+        //ring transform and draw
         let ring_transform = (three_transform).times(Mat4.inverse(Mat4.rotation(t*0.85, 0, 1, 0)));
         let tilt = Mat4.rotation(Math.PI/2, 0, 1, 0);
         let tilt_rot = Mat4.rotation(Math.PI/2 + Math.PI/2 * Math.cos(t), 1, 0, 0);
         //let Ring_S = Mat4.scale([1, 1, .01]);
-        ring_transform = ring_transform.times(tilt).times(tilt_rot).times(Mat4.scale(2,2,0.2));
+        ring_transform = ring_transform.times(tilt).times(tilt_rot).times(Mat4.scale(3,3,0.1));
         //.times(Ring_S); times(tilt).times(tilt_rot)
 
      
         this.shapes.planet_3.draw(context, program_state, three_transform, this.materials.planet_3);
-        
-
-        this.shapes.torus2.draw(context, program_state, ring_transform, this.materials.ring);
+        this.shapes.torus.draw(context, program_state, ring_transform, this.materials.ring);
         this.planet_3 = Mat4.inverse(three_transform.times(Mat4.translation(0, 0, 5)));
 
-        //planet 4
+        //planet 4 transform and draw
         let four_transform = Mat4.identity();
         let RS_4 = Mat4.rotation(t*0.8, 0, 1, 0);
         let T_4 = Mat4.translation(14,0,0);
         four_transform = four_transform.times(RS_4).times(T_4).times(RS_4);
-
+        
+        //moon transform and draw
         let moon_transform = Mat4.identity().times(four_transform).times(Mat4.rotation(t*0.8, 0, 1, 0)).times(Mat4.translation(2,0,0));
 
         this.shapes.planet_4.draw(context, program_state, four_transform, this.materials.planet_4);
@@ -172,6 +162,7 @@ export class Assignment3 extends Scene {
         this.shapes.moon.draw(context, program_state, moon_transform, this.materials.moon);
         this.moon = Mat4.inverse(moon_transform.times(Mat4.translation(0, 0, 5)));
 
+        //buttons, get this.planet and set camera angle
         if (this.attached != undefined) {
             let desired = this.attached();
             program_state.set_camera(desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1)));
